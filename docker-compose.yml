@@ -1,0 +1,37 @@
+version: '3'
+services:
+  db1:
+    image: postgres
+    environment:
+      POSTGRES_USER: 'admin'
+      POSTGRES_PASSWORD: 'admin'
+      POSTGRES_DB: 'innolib'
+    ports:
+      - '5432:5432'
+    volumes:
+      - db1-data:/var/lib/postgresql/data
+  db2:
+    image: postgres
+    environment:
+      POSTGRES_USER: 'test'
+      POSTGRES_PASSWORD: 'test'
+      POSTGRES_DB: 'test'
+    ports:
+      - '5432:5433'
+    volumes:
+      - db2-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 'isa@admin.com'
+      PGADMIN_DEFAULT_PASSWORD: 'admin123'
+    ports:
+      - '80:80'
+    links:
+      - db1
+      - db2
+
+volumes:
+  db1-data:
+  db2-data:

@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model EmailChange {
+  token      String   @id @db.Char(21)
+  newEmail   String
+  userId     Int      @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  validUntil DateTime @default(dbgenerated("(timezone('utc'::text, now()) + '2 days'::interval)")) @db.Timestamp(6)
+
+  @@map("email-change")
+}
+
+model EmailVerification {
+  token      String   @id @db.Char(21)
+  userId     Int      @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  validUntil DateTime @default(dbgenerated("(timezone('utc'::text, now()) + '2 days'::interval)")) @db.Timestamp(6)
+
+  @@map("email-verification")
+}
+
+model PasswordReset {
+  token      String   @id @db.Char(21)
+  userId     Int      @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  validUntil DateTime @default(dbgenerated("(timezone('utc'::text, now()) + '2 days'::interval)")) @db.Timestamp(6)
+
+  @@map("password-reset")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  middleName    String?
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  team          Team?    @relation(fields: [teamId], references: [id])
+  teamId        Int?
+  score         Int      @default(0)
+  role          String   @default("user")
+  emailVerified Boolean  @default(false)
+
+  emailChange       EmailChange?
+  emailVerification EmailVerification?
+  passwordReset     PasswordReset?
+
+  innovations Innovation[]
+  Comment     Comment[]
+
+  @@map("user")
+}
+
+model Innovation {
+  id         Int       @id @default(autoincrement())
+  title      String
+  content    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  author     User      @relation(fields: [authorId], references: [id])
+  authorId   Int
+  team       Team?     @relation(fields: [teamId], references: [id])
+  teamId     Int?
+  score      Int       @default(0)
+  comments   Comment[]
+  category   Category  @relation(fields: [categoryId], references: [id])
+  categoryId Int
+}
+
+model Category {
+  id         Int          @id @default(autoincrement())
+  name       String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Innovation Innovation[]
+}
+
+model Comment {
+  id           Int         @id @default(autoincrement())
+  content      String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  author       User        @relation(fields: [authorId], references: [id])
+  authorId     Int
+  Innovation   Innovation? @relation(fields: [innovationId], references: [id])
+  innovationId Int?
+}
+
+model Team {
+  id         Int          @id @default(autoincrement())
+  name       String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  members    User[]
+  Innovation Innovation[]
+}
